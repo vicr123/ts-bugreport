@@ -53,7 +53,7 @@ void MainWindow::reloadIssues() {
     ui->issuesWidget->clear();
 
     //Create request
-    QNetworkRequest request(QUrl("https://api.github.com/repos/vicr123/" + getCurrentRepo() + "/issues"));
+    QNetworkRequest request(QUrl("https://api.github.com/repos/vicr123/" + getCurrentRepo() + "/issues?state=all"));
     request.setHeader(QNetworkRequest::UserAgentHeader, "ts-bugreport/1.0");
 
     QString authToken = settings.value("login/token", "").toString();
@@ -67,10 +67,15 @@ void MainWindow::reloadIssues() {
 
         QJsonDocument document = QJsonDocument::fromJson(response);
         for (QJsonValue issue : document.array()) {
-            QListWidgetItem* item = new QListWidgetItem();
-            item->setData(Qt::UserRole, issue.toObject());
-            item->setText(issue.toObject().value("title").toString());
-            ui->issuesWidget->addItem(item);
+            if (!issue.toObject().contains("pull_request")) {
+                QListWidgetItem* item = new QListWidgetItem();
+                item->setData(Qt::UserRole, issue.toObject());
+                item->setText(issue.toObject().value("title").toString());
+                if (issue.toObject().value("state").toString() == "closed") {
+                    item->setTextColor(ui->issuesWidget->palette().color(QPalette::Disabled, QPalette::WindowText));
+                }
+                ui->issuesWidget->addItem(item);
+            }
         }
     });
 }
@@ -141,6 +146,7 @@ void MainWindow::on_issuesWidget_currentItemChanged(QListWidgetItem *current, QL
         ui->detailsPane->setVisible(false);
     } else {
         ui->detailsPane->setVisible(true);
+        ui->issueLoadingBar->setVisible(true);
         QJsonObject object = current->data(Qt::UserRole).toJsonObject();
         ui->issueTitle->setText(object.value("title").toString());
 
@@ -155,8 +161,10 @@ void MainWindow::on_issuesWidget_currentItemChanged(QListWidgetItem *current, QL
         QString state = object.value("state").toString();
         if (state == "open") {
             ui->IssueState->setText(tr("This issue is currently %1").arg("open."));
+            ui->issueDetailsFrame->setEnabled(true);
         } else if (state == "closed") {
             ui->IssueState->setText(tr("This issue is currently %1").arg("closed."));
+            ui->issueDetailsFrame->setEnabled(false);
         }
 
         QJsonObject author = object.value("user").toObject();
@@ -173,24 +181,26 @@ void MainWindow::on_issuesWidget_currentItemChanged(QListWidgetItem *current, QL
 
         QNetworkReply* commentsReply = netMgr.get(commentsReq);
         connect(commentsReply, &QNetworkReply::finished, [=] {
-            QFrame* firstComment = new QFrame();
-            firstComment->setFrameShape(QFrame::StyledPanel);
-            QBoxLayout* layout = new QBoxLayout(QBoxLayout::TopToBottom);
+            if (object.value("body").toString() != "") {
+                QFrame* firstComment = new QFrame();
+                firstComment->setFrameShape(QFrame::StyledPanel);
+                QBoxLayout* layout = new QBoxLayout(QBoxLayout::TopToBottom);
 
-            QLabel* bodyLabel = new QLabel();
-            bodyLabel->setWordWrap(true);
-            bodyLabel->setText(object.value("body").toString());
-            layout->addWidget(bodyLabel);
+                QLabel* bodyLabel = new QLabel();
+                bodyLabel->setWordWrap(true);
+                bodyLabel->setText(object.value("body").toString());
+                layout->addWidget(bodyLabel);
 
-            QLabel* authorLabel = new QLabel();
-            authorLabel->setWordWrap(true);
-            authorLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-            authorLabel->setDisabled(true);
-            authorLabel->setText(author.value("login").toString());
-            layout->addWidget(authorLabel);
+                QLabel* authorLabel = new QLabel();
+                authorLabel->setWordWrap(true);
+                authorLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                authorLabel->setDisabled(true);
+                authorLabel->setText(author.value("login").toString());
+                layout->addWidget(authorLabel);
 
-            firstComment->setLayout(layout);
-            ui->issuesDetailsContents->layout()->addWidget(firstComment);
+                firstComment->setLayout(layout);
+                ui->issuesDetailsContents->layout()->addWidget(firstComment);
+            }
 
             QByteArray comments = commentsReply->readAll();
 
@@ -217,8 +227,21 @@ void MainWindow::on_issuesWidget_currentItemChanged(QListWidgetItem *current, QL
                 authorLabel->setText(author.value("login").toString());
                 layout->addWidget(authorLabel);
 
+                if (bodyLabel->text().contains("@" + username)) {
+                    QPalette pal = commentFrame->palette();
+                    pal.setColor(QPalette::Window, pal.color(QPalette::Highlight));
+                    pal.setColor(QPalette::WindowText, pal.color(QPalette::HighlightedText));
+                    commentFrame->setPalette(pal);
+                }
+
                 ui->issuesDetailsContents->layout()->addWidget(commentFrame);
             }
+
+            QSpacerItem* spacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+            ui->issuesDetailsContents->layout()->addItem(spacer);
+
+            ui->issuesDetails->verticalScrollBar()->setValue(ui->issuesDetails->verticalScrollBar()->maximum());
+            ui->issueLoadingBar->setVisible(false);
         });
 
         QLayoutItem* item;
@@ -231,17 +254,35 @@ void MainWindow::on_issuesWidget_currentItemChanged(QListWidgetItem *current, QL
 }
 
 void MainWindow::reloadLogins() {
+    QString authToken = settings.value("login/token", "").toString();
+
     QSettings settings;
     if (settings.value("login/token", "") == "") {
         ui->writeCommentsMessage->setVisible(true);
         ui->commentButton->setEnabled(false);
         ui->newBugLoginMessage->setVisible(true);
         ui->submitReportButton->setEnabled(false);
+        username = "";
     } else {
         ui->writeCommentsMessage->setVisible(false);
         ui->commentButton->setEnabled(true);
         ui->newBugLoginMessage->setVisible(false);
         ui->submitReportButton->setEnabled(true);
+
+        //Ask for user details
+        QNetworkRequest request(QUrl("https://api.github.com/user"));
+        request.setHeader(QNetworkRequest::UserAgentHeader, "ts-bugreport/1.0");
+        request.setRawHeader("Authorization", QString("token " + authToken).toUtf8());
+
+        QNetworkReply* reply = netMgr.get(request);
+        connect(reply, &QNetworkReply::finished, [=] {
+            QByteArray replyData = reply->readAll();
+
+            QJsonDocument doc = QJsonDocument::fromJson(replyData);
+            QJsonObject obj = doc.object();
+
+            username = obj.value("login").toString();
+        });
     }
 }
 
@@ -267,13 +308,6 @@ void MainWindow::on_cancelBugReportButton_clicked()
     anim->setDuration(500);
     connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
     anim->start();
-
-    tToast* toast = new tToast;
-    toast->setTitle("Bug Report Cancelled");
-    toast->setText("Your bug report has been cancelled.");
-    toast->setTimeout(5000);
-    connect(toast, SIGNAL(dismissed()), toast, SLOT(deleteLater()));
-    toast->show(this);
 }
 
 void MainWindow::on_submitReportButton_clicked()
@@ -404,4 +438,11 @@ void MainWindow::on_commentButton_clicked()
             }
         }
     });
+}
+
+void MainWindow::on_actionAccount_triggered()
+{
+    UserInfo info;
+    info.exec();
+    reloadLogins();
 }

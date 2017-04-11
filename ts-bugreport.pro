@@ -26,10 +26,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    logingithub.cpp
+    logingithub.cpp \
+    userinfo.cpp
 
 HEADERS  += mainwindow.h \
-    logingithub.h
+    logingithub.h \
+    userinfo.h
 
 FORMS    += mainwindow.ui \
-    logingithub.ui
+    logingithub.ui \
+    userinfo.ui

@@ -9,7 +9,13 @@
 #include <QPlainTextEdit>
 #include <tpropertyanimation.h>
 #include <ttoast.h>
+#include <QSpacerItem>
+#include <QScrollBar>
+#include <QProgressBar>
+#include <QToolButton>
+#include <QMenu>
 #include "logingithub.h"
+#include "userinfo.h"
 
 namespace Ui {
 class MainWindow;
@@ -56,10 +62,13 @@ private slots:
 
     void on_commentButton_clicked();
 
+    void on_actionAccount_triggered();
+
 private:
     Ui::MainWindow *ui;
 
     QString getCurrentRepo();
+    QString username;
 
     QNetworkAccessManager netMgr;
     QSettings settings;
