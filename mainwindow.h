@@ -64,6 +64,8 @@ private slots:
 
     void on_actionAccount_triggered();
 
+    QString mdToHtml(QString markdown);
+
 private:
     Ui::MainWindow *ui;
 

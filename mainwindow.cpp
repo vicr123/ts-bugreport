@@ -181,67 +181,156 @@ void MainWindow::on_issuesWidget_currentItemChanged(QListWidgetItem *current, QL
 
         QNetworkReply* commentsReply = netMgr.get(commentsReq);
         connect(commentsReply, &QNetworkReply::finished, [=] {
-            if (object.value("body").toString() != "") {
-                QFrame* firstComment = new QFrame();
-                firstComment->setFrameShape(QFrame::StyledPanel);
-                QBoxLayout* layout = new QBoxLayout(QBoxLayout::TopToBottom);
+            //Get all events
+            QNetworkRequest eventsReq(QUrl(object.value("events_url").toString()));
+            eventsReq.setHeader(QNetworkRequest::UserAgentHeader, "ts-bugreport/1.0");
 
-                QLabel* bodyLabel = new QLabel();
-                bodyLabel->setWordWrap(true);
-                bodyLabel->setText(object.value("body").toString());
-                layout->addWidget(bodyLabel);
-
-                QLabel* authorLabel = new QLabel();
-                authorLabel->setWordWrap(true);
-                authorLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-                authorLabel->setDisabled(true);
-                authorLabel->setText(author.value("login").toString());
-                layout->addWidget(authorLabel);
-
-                firstComment->setLayout(layout);
-                ui->issuesDetailsContents->layout()->addWidget(firstComment);
+            QString authToken = settings.value("login/token", "").toString();
+            if (authToken != "") {
+                eventsReq.setRawHeader("Authorization", QString("token " + authToken).toUtf8());
             }
 
-            QByteArray comments = commentsReply->readAll();
+            QNetworkReply* eventsReply = netMgr.get(eventsReq);
+            connect(eventsReply, &QNetworkReply::finished, [=] {
+                //Add in first comment
+                if (object.value("body").toString() != "") {
+                    QFrame* firstComment = new QFrame();
+                    firstComment->setFrameShape(QFrame::StyledPanel);
+                    QBoxLayout* layout = new QBoxLayout(QBoxLayout::TopToBottom);
 
-            QJsonDocument commentsDoc = QJsonDocument::fromJson(comments);
-            for (QJsonValue comment : commentsDoc.array()) {
-                QJsonObject commentObj = comment.toObject();
+                    QLabel* bodyLabel = new QLabel();
+                    bodyLabel->setWordWrap(true);
+                    bodyLabel->setText(mdToHtml(object.value("body").toString()));
+                    layout->addWidget(bodyLabel);
 
-                QFrame* commentFrame = new QFrame();
-                commentFrame->setFrameShape(QFrame::StyledPanel);
-                QBoxLayout* layout = new QBoxLayout(QBoxLayout::TopToBottom);
+                    QLabel* authorLabel = new QLabel();
+                    authorLabel->setWordWrap(true);
+                    authorLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                    authorLabel->setDisabled(true);
+                    authorLabel->setText(object.value("created_at").toVariant().toDateTime().toLocalTime().toString("ddd, dd MMM yyyy HH:mm") + " · " + author.value("login").toString() );
+                    layout->addWidget(authorLabel);
 
-                QLabel* bodyLabel = new QLabel();
-                bodyLabel->setWordWrap(true);
-                bodyLabel->setText(commentObj.value("body").toString());
-                layout->addWidget(bodyLabel);
-                commentFrame->setLayout(layout);
-
-                QJsonObject author = commentObj.value("user").toObject();
-
-                QLabel* authorLabel = new QLabel();
-                authorLabel->setWordWrap(true);
-                authorLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-                authorLabel->setDisabled(true);
-                authorLabel->setText(author.value("login").toString());
-                layout->addWidget(authorLabel);
-
-                if (bodyLabel->text().contains("@" + username)) {
-                    QPalette pal = commentFrame->palette();
-                    pal.setColor(QPalette::Window, pal.color(QPalette::Highlight));
-                    pal.setColor(QPalette::WindowText, pal.color(QPalette::HighlightedText));
-                    commentFrame->setPalette(pal);
+                    firstComment->setLayout(layout);
+                    ui->issuesDetailsContents->layout()->addWidget(firstComment);
                 }
 
-                ui->issuesDetailsContents->layout()->addWidget(commentFrame);
-            }
+                //Read in all comments
+                QByteArray comments = commentsReply->readAll();
+                QJsonDocument commentsDoc = QJsonDocument::fromJson(comments);
 
-            QSpacerItem* spacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-            ui->issuesDetailsContents->layout()->addItem(spacer);
+                QList<QJsonObject> allComments;
+                for (QJsonValue comment : commentsDoc.array()) {
+                    allComments.append(comment.toObject());
+                }
 
-            ui->issuesDetails->verticalScrollBar()->setValue(ui->issuesDetails->verticalScrollBar()->maximum());
-            ui->issueLoadingBar->setVisible(false);
+                //Read in all events
+                QByteArray events = eventsReply->readAll();
+                QJsonDocument eventsDoc = QJsonDocument::fromJson(events);
+
+                QList<QJsonObject> allEvents;
+                for (QJsonValue event : eventsDoc.array()) {
+                    allEvents.append(event.toObject());
+                }
+
+                //Set index markers
+                int currentComment = 0, currentEvent = 0;
+
+                //Iterate over each comment and event, checking the date
+
+                while (currentComment != allComments.count() || currentEvent != allEvents.count()) {
+                    bool doNextComment;
+
+                    if (currentComment == allComments.count()) {
+                        doNextComment = false;
+                    } else if (currentEvent == allEvents.count()) {
+                        doNextComment = true;
+                    } else if (allComments.at(currentComment).value("created_at").toVariant().toDateTime().toMSecsSinceEpoch() < allEvents.at(currentEvent).value("created_at").toVariant().toDateTime().toMSecsSinceEpoch()) {
+                        doNextComment = true;
+                    } else {
+                        doNextComment = false;
+                    }
+
+                    if (doNextComment) {
+                        QJsonObject commentObj = allComments.at(currentComment);
+                        QFrame* commentFrame = new QFrame();
+                        commentFrame->setFrameShape(QFrame::StyledPanel);
+                        QBoxLayout* layout = new QBoxLayout(QBoxLayout::TopToBottom);
+
+                        QLabel* bodyLabel = new QLabel();
+                        bodyLabel->setWordWrap(true);
+                        bodyLabel->setText(mdToHtml(commentObj.value("body").toString()));
+                        layout->addWidget(bodyLabel);
+
+                        QJsonObject author = commentObj.value("user").toObject();
+
+                        QLabel* authorLabel = new QLabel();
+                        authorLabel->setWordWrap(true);
+                        authorLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                        authorLabel->setDisabled(true);
+                        authorLabel->setText(commentObj.value("created_at").toVariant().toDateTime().toLocalTime().toString("ddd, dd MMM yyyy HH:mm") + " · " + author.value("login").toString() );
+                        layout->addWidget(authorLabel);
+
+                        if (bodyLabel->text().contains("@" + username)) {
+                            QPalette pal = commentFrame->palette();
+                            pal.setColor(QPalette::Window, pal.color(QPalette::Highlight));
+                            pal.setColor(QPalette::WindowText, pal.color(QPalette::HighlightedText));
+                            commentFrame->setPalette(pal);
+                        }
+
+                        commentFrame->setLayout(layout);
+
+                        ui->issuesDetailsContents->layout()->addWidget(commentFrame);
+                        currentComment++;
+                    } else {
+                        QJsonObject eventObj = allEvents.at(currentEvent);
+                        QJsonObject author = eventObj.value("actor").toObject();
+                        QString event = eventObj.value("event").toString();
+
+                        if (event == "mentioned" || event == "subscribed") {
+                            currentEvent++;
+                            continue;
+                        }
+
+                        QFrame* eventFrame = new QFrame();
+                        QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight);
+
+                        QLabel* imageLabel = new QLabel();
+                        if (event == "closed") {
+                            imageLabel->setPixmap(QIcon::fromTheme("dialog-ok").pixmap(16, 16));
+                        } else {
+                            imageLabel->setPixmap(QIcon::fromTheme("go-next").pixmap(16, 16));
+                        }
+                        layout->addWidget(imageLabel);
+
+                        QLabel* bodyLabel = new QLabel();
+                        bodyLabel->setWordWrap(true);
+                        bodyLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+                        QString body = tr("<b>%1</b> has %2 this bug.");
+                        QString user = author.value("login").toString();
+
+                        if (event == "closed") {
+                            body = body.arg(user, "closed");
+                        } else {
+                            body = body.arg(user, event);
+                        }
+
+                        bodyLabel->setText(body);
+                        layout->addWidget(bodyLabel);
+
+                        eventFrame->setLayout(layout);
+
+                        ui->issuesDetailsContents->layout()->addWidget(eventFrame);
+                        currentEvent++;
+                    }
+                }
+
+                //Finalize the view
+                QSpacerItem* spacer = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+                ui->issuesDetailsContents->layout()->addItem(spacer);
+
+                ui->issuesDetails->verticalScrollBar()->setValue(ui->issuesDetails->verticalScrollBar()->maximum());
+                ui->issueLoadingBar->setVisible(false);
+            });
         });
 
         QLayoutItem* item;
@@ -445,4 +534,63 @@ void MainWindow::on_actionAccount_triggered()
     UserInfo info;
     info.exec();
     reloadLogins();
+}
+
+QString MainWindow::mdToHtml(QString markdown) {
+    QString retval;
+
+    bool inBold = false, inItalic = false, inUnderline = false, inCode = false;
+    for (int i = 0; i < markdown.length(); i++) {
+        QChar ch = markdown.at(i);
+
+        QChar ch1 = 'z';
+        if (i + 1 != markdown.length()) {
+            ch1 = markdown.at(i + 1);
+        }
+
+        if (ch == "`") { //Code
+            if (inCode) {
+                retval.append("</code>");
+                inCode = false;
+            } else {
+                retval.append("<code>");
+                inCode = true;
+            }
+        } else if (ch == '<') { //Less than
+            retval.append("&lt;");
+        } else if (ch == '>') { //Greater than
+            retval.append("&gt;");
+        } else if (ch == '\n') { //Line Break
+            retval.append("<br />");
+        } else {
+            if (!inCode) {
+                if (ch == '*') {
+                    if (ch1 == '*') { //Bold
+                        if (inBold) {
+                            retval.append("</b>");
+                            inBold = false;
+                        } else {
+                            retval.append("<b>");
+                            inBold = true;
+                        }
+                        i++; //Skip the next character
+                    } else { //Italics
+                        if (inItalic) {
+                            retval.append("</i>");
+                            inItalic = false;
+                        } else {
+                            retval.append("<i>");
+                            inItalic = true;
+                        }
+                    }
+                } else {
+                    retval.append(ch);
+                }
+            } else {
+                retval.append(ch);
+            }
+        }
+    }
+
+    return retval;
 }
