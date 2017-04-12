@@ -147,146 +147,175 @@
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_7">
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QListWidget" name="issuesWidget"/>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <widget class="QFrame" name="MainFrame">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QListWidget" name="issuesWidget"/>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_7">
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <spacer name="horizontalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="reportNewBugButton">
+             <property name="text">
+              <string>Report New Bug</string>
+             </property>
+             <property name="icon">
+              <iconset theme="tools-report-bug"/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QFrame" name="detailsPane">
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
           <property name="bottomMargin">
            <number>0</number>
           </property>
           <item>
-           <spacer name="horizontalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+           <widget class="QFrame" name="issueDetailsFrame">
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
             </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
             </property>
-           </spacer>
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
+              <widget class="QLabel" name="issueTitle">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>15</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Select a bug</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="issueAuthor">
+               <property name="text">
+                <string>Opened by %1 on %2</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="IssueState">
+               <property name="text">
+                <string>This issue is currently %1</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="reportNewBugButton">
-            <property name="text">
-             <string>Report New Bug</string>
+           <widget class="QProgressBar" name="issueLoadingBar">
+            <property name="maximum">
+             <number>0</number>
             </property>
-            <property name="icon">
-             <iconset theme="tools-report-bug"/>
+            <property name="value">
+             <number>-1</number>
             </property>
            </widget>
           </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QFrame" name="detailsPane">
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QFrame" name="issueDetailsFrame">
-           <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_4">
-            <item>
-             <widget class="QLabel" name="issueTitle">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>15</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Select a bug</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="issueAuthor">
-              <property name="text">
-               <string>Opened by %1 on %2</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="IssueState">
-              <property name="text">
-               <string>This issue is currently %1</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QProgressBar" name="issueLoadingBar">
-           <property name="maximum">
-            <number>0</number>
-           </property>
-           <property name="value">
-            <number>-1</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QScrollArea" name="issuesDetails">
-           <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
-           </property>
-           <property name="horizontalScrollBarPolicy">
-            <enum>Qt::ScrollBarAlwaysOff</enum>
-           </property>
-           <property name="widgetResizable">
-            <bool>true</bool>
-           </property>
-           <widget class="QWidget" name="issuesDetailsContents">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>471</width>
-              <height>68</height>
-             </rect>
+          <item>
+           <widget class="QScrollArea" name="issuesDetails">
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
             </property>
-            <layout class="QVBoxLayout" name="verticalLayout_2">
+            <property name="horizontalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="issuesDetailsContents">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>472</width>
+               <height>50</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_2">
+              <property name="leftMargin">
+               <number>9</number>
+              </property>
+              <property name="topMargin">
+               <number>3</number>
+              </property>
+              <property name="rightMargin">
+               <number>9</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="newCommentFrame">
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_5">
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -299,131 +328,293 @@
              <property name="bottomMargin">
               <number>0</number>
              </property>
+             <item>
+              <widget class="QPlainTextEdit" name="commentTextEdit">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="placeholderText">
+                <string>Write a comment...</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <item>
+                <widget class="QFrame" name="writeCommentsMessage">
+                 <property name="frameShape">
+                  <enum>QFrame::NoFrame</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_4">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="label">
+                    <property name="text">
+                     <string>To write comments, you'll need to log in.</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="loginButton">
+                    <property name="text">
+                     <string>Log In</string>
+                    </property>
+                    <property name="icon">
+                     <iconset theme="user"/>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="commentButton">
+                 <property name="text">
+                  <string>Comment</string>
+                 </property>
+                 <property name="icon">
+                  <iconset theme="mail-send"/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
             </layout>
            </widget>
-          </widget>
-         </item>
-         <item>
-          <widget class="QFrame" name="newCommentFrame">
-           <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
-            <property name="leftMargin">
-             <number>0</number>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="rateLimitFrame">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item row="1" column="2">
+        <spacer name="horizontalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="1">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <spacer name="horizontalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="1">
+        <widget class="QFrame" name="frame_2">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <property name="leftMargin">
+           <number>20</number>
+          </property>
+          <property name="topMargin">
+           <number>20</number>
+          </property>
+          <property name="rightMargin">
+           <number>20</number>
+          </property>
+          <property name="bottomMargin">
+           <number>20</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
             </property>
-            <property name="topMargin">
-             <number>0</number>
+            <property name="text">
+             <string>You are being rate limited.</string>
             </property>
-            <property name="rightMargin">
-             <number>0</number>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="rateLimitReset">
+            <property name="text">
+             <string notr="true">Your rate limit resets on %1.</string>
             </property>
-            <property name="bottomMargin">
-             <number>0</number>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="rateLimitLogin">
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
             </property>
-            <item>
-             <widget class="QPlainTextEdit" name="commentTextEdit">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>100</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>100</height>
-               </size>
-              </property>
-              <property name="placeholderText">
-               <string>Write a comment...</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_3">
-              <item>
-               <widget class="QFrame" name="writeCommentsMessage">
-                <property name="frameShape">
-                 <enum>QFrame::NoFrame</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_4">
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <widget class="QLabel" name="label">
-                   <property name="text">
-                    <string>To write comments, you'll need to log in.</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="loginButton">
-                   <property name="text">
-                    <string>Log In</string>
-                   </property>
-                   <property name="icon">
-                    <iconset theme="user"/>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="commentButton">
-                <property name="text">
-                 <string>Comment</string>
-                </property>
-                <property name="icon">
-                 <iconset theme="mail-send"/>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_8">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <spacer name="horizontalSpacer_6">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>To increase your rate limit</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="logInRateLimit">
+               <property name="text">
+                <string>Log In</string>
+               </property>
+               <property name="icon">
+                <iconset theme="user"/>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_7">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
     </item>
     <item>
      <widget class="QFrame" name="reportBugFrame">
@@ -599,18 +790,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>pushButton_2</sender>
+   <sender>logInRateLimit</sender>
    <signal>clicked()</signal>
    <receiver>loginButton</receiver>
    <slot>click()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>271</x>
-     <y>725</y>
+     <x>554</x>
+     <y>389</y>
     </hint>
     <hint type="destinationlabel">
-     <x>762</x>
-     <y>408</y>
+     <x>759</x>
+     <y>275</y>
     </hint>
    </hints>
   </connection>
@@ -622,11 +813,27 @@
    <hints>
     <hint type="sourcelabel">
      <x>416</x>
-     <y>402</y>
+     <y>270</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
      <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>loginButton</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>290</x>
+     <y>612</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>763</x>
+     <y>270</y>
     </hint>
    </hints>
   </connection>

@@ -12,7 +12,19 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->reportBugFrame->setParent(this);
     ui->reportBugFrame->setGeometry(0, 0, 0, 0);
 
+    QTimer* limitTimer = new QTimer;
+    limitTimer->setInterval(30000);
+    connect(limitTimer, SIGNAL(timeout()), this, SLOT(checkRateLimiting()));
+    limitTimer->start();
+
+    connect(&netMgr, &QNetworkAccessManager::finished, [=](QNetworkReply* reply) {
+        if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 403) {
+            checkRateLimiting();
+        }
+    });
+
     ui->detailsPane->setVisible(false);
+    ui->rateLimitFrame->setVisible(false);
     reloadIssues();
     reloadLogins();
 }
@@ -270,7 +282,7 @@ void MainWindow::on_issuesWidget_currentItemChanged(QListWidgetItem *current, QL
                         authorLabel->setText(commentObj.value("created_at").toVariant().toDateTime().toLocalTime().toString("ddd, dd MMM yyyy HH:mm") + " · " + author.value("login").toString() );
                         layout->addWidget(authorLabel);
 
-                        if (bodyLabel->text().contains("@" + username)) {
+                        if (username != "" && bodyLabel->text().contains("@" + username)) {
                             QPalette pal = commentFrame->palette();
                             pal.setColor(QPalette::Window, pal.color(QPalette::Highlight));
                             pal.setColor(QPalette::WindowText, pal.color(QPalette::HighlightedText));
@@ -351,12 +363,14 @@ void MainWindow::reloadLogins() {
         ui->commentButton->setEnabled(false);
         ui->newBugLoginMessage->setVisible(true);
         ui->submitReportButton->setEnabled(false);
+        ui->rateLimitLogin->setVisible(true);
         username = "";
     } else {
         ui->writeCommentsMessage->setVisible(false);
         ui->commentButton->setEnabled(true);
         ui->newBugLoginMessage->setVisible(false);
         ui->submitReportButton->setEnabled(true);
+        ui->rateLimitLogin->setVisible(false);
 
         //Ask for user details
         QNetworkRequest request(QUrl("https://api.github.com/user"));
@@ -373,6 +387,8 @@ void MainWindow::reloadLogins() {
             username = obj.value("login").toString();
         });
     }
+
+    checkRateLimiting();
 }
 
 void MainWindow::on_actionReport_new_bug_triggered()
@@ -386,6 +402,11 @@ void MainWindow::on_actionReport_new_bug_triggered()
     anim->setDuration(500);
     connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
     anim->start();
+
+    ui->newBugTitle->setText("");
+    ui->newBugBody->setText("");
+
+    creatingIssue = true;
 }
 
 void MainWindow::on_cancelBugReportButton_clicked()
@@ -397,6 +418,8 @@ void MainWindow::on_cancelBugReportButton_clicked()
     anim->setDuration(500);
     connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
     anim->start();
+
+    creatingIssue = false;
 }
 
 void MainWindow::on_submitReportButton_clicked()
@@ -436,6 +459,8 @@ void MainWindow::on_submitReportButton_clicked()
                 connect(anim, SIGNAL(finished()), anim, SLOT(deleteLater()));
                 anim->start();
 
+                creatingIssue = false;
+
                 tToast* toast = new tToast;
                 toast->setTitle("Bug Report Created");
                 toast->setText("Your bug report has been created successfully!");
@@ -444,7 +469,6 @@ void MainWindow::on_submitReportButton_clicked()
                 toast->show(this);
                 break;
             }
-
             default: {
                 ui->reportBugFrame->setEnabled(true);
 
@@ -504,7 +528,6 @@ void MainWindow::on_commentButton_clicked()
                 toast->show(this);
                 break;
             }
-
             default: {
                 ui->newCommentFrame->setEnabled(true);
 
@@ -593,4 +616,45 @@ QString MainWindow::mdToHtml(QString markdown) {
     }
 
     return retval;
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event) {
+    if (creatingIssue) {
+        ui->reportBugFrame->setGeometry(0, ui->issuesWidget->mapTo(this, QPoint(0, 0)).y(), this->width(), this->height() - ui->issuesWidget->mapTo(this, QPoint(0, 0)).y());
+    } else {
+        ui->reportBugFrame->setGeometry(0, 0, 0, 0);
+    }
+}
+
+void MainWindow::checkRateLimiting() {
+    //Check rate limits
+    QNetworkRequest request(QUrl("https://api.github.com/rate_limit"));
+    request.setHeader(QNetworkRequest::UserAgentHeader, "ts-bugreport/1.0");
+
+    QString authToken = settings.value("login/token", "").toString();
+    if (authToken != "") {
+        request.setRawHeader("Authorization", QString("token " + authToken).toUtf8());
+    }
+
+    QNetworkReply* reply = netMgr.get(request);
+    connect(reply, &QNetworkReply::finished, [=] {
+        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        QJsonObject resources = doc.object().value("resources").toObject();
+
+        QJsonObject core = resources.value("core").toObject();
+        if (core.value("remaining").toInt() == 0) {
+            ui->programSelection->setVisible(false);
+            ui->MainFrame->setVisible(false);
+            ui->actionReport_new_bug->setEnabled(false);
+            ui->rateLimitFrame->setVisible(true);
+
+            QDateTime reset = QDateTime::fromSecsSinceEpoch(core.value("reset").toInt());
+            ui->rateLimitReset->setText(tr("Your rate limit resets on %1.").arg(reset.toString("dddd, dd MMM yyyy HH:mm")));
+        } else {
+            ui->programSelection->setVisible(true);
+            ui->MainFrame->setVisible(true);
+            ui->actionReport_new_bug->setEnabled(true);
+            ui->rateLimitFrame->setVisible(false);
+        }
+    });
 }

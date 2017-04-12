@@ -14,6 +14,7 @@
 #include <QProgressBar>
 #include <QToolButton>
 #include <QMenu>
+#include <QResizeEvent>
 #include "logingithub.h"
 #include "userinfo.h"
 
@@ -66,6 +67,8 @@ private slots:
 
     QString mdToHtml(QString markdown);
 
+    void checkRateLimiting();
+
 private:
     Ui::MainWindow *ui;
 
@@ -74,6 +77,10 @@ private:
 
     QNetworkAccessManager netMgr;
     QSettings settings;
+
+    void resizeEvent(QResizeEvent* event);
+    bool creatingIssue = false;
+    bool rateLimitReached = false;
 };
 
 #endif // MAINWINDOW_H
